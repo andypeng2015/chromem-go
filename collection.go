@@ -480,6 +480,9 @@ type Result struct {
 //     There can be fewer results if a filter is applied.
 //   - where: Conditional filtering on metadata. Optional.
 //   - whereDocument: Conditional filtering on documents. Optional.
+//
+// The [Result]'s [Document]-related fields are a deep copy of the original document's
+// fields, so they can be safely modified without affecting the collection.
 func (c *Collection) Query(ctx context.Context, queryText string, nResults int, where, whereDocument map[string]string) ([]Result, error) {
 	if queryText == "" {
 		return nil, errors.New("queryText is empty")
@@ -496,6 +499,9 @@ func (c *Collection) Query(ctx context.Context, queryText string, nResults int, 
 // QueryWithOptions performs an exhaustive nearest neighbor search on the collection.
 //
 //   - options: The options for the query. See [QueryOptions] for more information.
+//
+// The [Result]'s [Document]-related fields are a deep copy of the original document's
+// fields, so they can be safely modified without affecting the collection.
 func (c *Collection) QueryWithOptions(ctx context.Context, options QueryOptions) ([]Result, error) {
 	if options.QueryText == "" && len(options.QueryEmbedding) == 0 {
 		return nil, errors.New("QueryText and QueryEmbedding options are empty")
@@ -553,6 +559,9 @@ func (c *Collection) QueryWithOptions(ctx context.Context, options QueryOptions)
 //     There can be fewer results if a filter is applied.
 //   - where: Conditional filtering on metadata. Optional.
 //   - whereDocument: Conditional filtering on documents. Optional.
+//
+// The [Result]'s [Document]-related fields are a deep copy of the original document's
+// fields, so they can be safely modified without affecting the collection.
 func (c *Collection) QueryEmbedding(ctx context.Context, queryEmbedding []float32, nResults int, where, whereDocument map[string]string) ([]Result, error) {
 	return c.queryEmbedding(ctx, queryEmbedding, nil, 0, nResults, where, whereDocument)
 }
@@ -611,11 +620,12 @@ func (c *Collection) queryEmbedding(ctx context.Context, queryEmbedding, negativ
 
 	res := make([]Result, 0, len(nMaxDocs))
 	for i := 0; i < len(nMaxDocs); i++ {
+		doc := c.documents[nMaxDocs[i].docID]
 		res = append(res, Result{
 			ID:         nMaxDocs[i].docID,
-			Metadata:   c.documents[nMaxDocs[i].docID].Metadata,
-			Embedding:  c.documents[nMaxDocs[i].docID].Embedding,
-			Content:    c.documents[nMaxDocs[i].docID].Content,
+			Metadata:   maps.Clone(doc.Metadata),
+			Embedding:  slices.Clone(doc.Embedding),
+			Content:    doc.Content,
 			Similarity: nMaxDocs[i].similarity,
 		})
 	}

@@ -584,6 +584,48 @@ func TestCollection_ListDocumentsPartial(t *testing.T) {
 	}
 }
 
+func TestCollection_QueryEmbeddingResultDeepCopiesDocumentFields(t *testing.T) {
+	ctx := context.Background()
+	db := NewDB()
+
+	c, err := db.CreateCollection("test", nil, nil)
+	if err != nil {
+		t.Fatal("expected no error, got", err)
+	}
+
+	vectors := []float32{-0.40824828, 0.40824828, 0.81649655} // normalized version of `{-0.1, 0.1, 0.2}`
+	if err := c.AddDocument(ctx, Document{
+		ID:        "1",
+		Metadata:  map[string]string{"foo": "bar"},
+		Embedding: vectors,
+		Content:   "hello world",
+	}); err != nil {
+		t.Fatalf("failed to add document: %v", err)
+	}
+
+	res, err := c.queryEmbedding(ctx, vectors, nil, 0, 1, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error from queryEmbedding: %v", err)
+	}
+	if len(res) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(res))
+	}
+
+	res[0].Metadata["foo"] = "mutated"
+	res[0].Embedding[0] = 0
+
+	doc, err := c.GetByID(ctx, "1")
+	if err != nil {
+		t.Fatalf("unexpected error getting document by ID: %v", err)
+	}
+	if doc.Metadata["foo"] != "bar" {
+		t.Fatalf("Result metadata mutation affected collection: expected %q, got %q", "bar", doc.Metadata["foo"])
+	}
+	if !slices.Equal(doc.Embedding, vectors) {
+		t.Fatalf("Result embedding mutation affected collection: expected %v, got %v", vectors, doc.Embedding)
+	}
+}
+
 func TestCollection_GetByID(t *testing.T) {
 	ctx := context.Background()
 
