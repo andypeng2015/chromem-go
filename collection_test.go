@@ -834,7 +834,7 @@ func TestCollection_Delete(t *testing.T) {
 	checkCount(1)
 
 	// Test 3 - Remove document by content
-	err = c.Delete(context.Background(), nil, map[string]string{"$contains": "hallo welt"})
+	err = c.Delete(context.Background(), nil, map[string]string{WhereContains: "hallo welt"})
 	if err != nil {
 		t.Fatal("expected nil, got", err)
 	}

@@ -11,7 +11,14 @@ import (
 	"sync"
 )
 
-var supportedFilters = []string{"$contains", "$not_contains"}
+// Operators for whereDocument filters. These are used as keys in the whereDocument
+// map.
+const (
+	WhereContains    string = "$contains"
+	WhereNotContains string = "$not_contains"
+)
+
+var supportedFilters = []string{WhereContains, WhereNotContains}
 
 type docSim struct {
 	docID      string
@@ -130,6 +137,8 @@ func filterDocs(docs map[string]*Document, where, whereDocument map[string]strin
 
 // documentMatchesFilters checks if a document matches the given filters.
 // When calling this function, the whereDocument keys must already be validated!
+// TODO: When changing the whereDocument (e.g. to `map[string][]string`) then take
+// the opportunity and change the `WhereContains` etc consts to a pseudo-enum type.
 func documentMatchesFilters(document *Document, where, whereDocument map[string]string) bool {
 	// A document's metadata must have *all* the fields in the where clause.
 	for k, v := range where {
@@ -144,11 +153,11 @@ func documentMatchesFilters(document *Document, where, whereDocument map[string]
 	// A document must satisfy *all* filters, until we support the `$or` operator.
 	for k, v := range whereDocument {
 		switch k {
-		case "$contains":
+		case WhereContains:
 			if !strings.Contains(document.Content, v) {
 				return false
 			}
-		case "$not_contains":
+		case WhereNotContains:
 			if strings.Contains(document.Content, v) {
 				return false
 			}
