@@ -66,13 +66,13 @@ func TestFilterDocs(t *testing.T) {
 		{
 			name:          "content not_contains all",
 			where:         nil,
-			whereDocument: map[string]string{"WhereNotContains": "bonjour"},
+			whereDocument: map[string]string{WhereNotContains: "bonjour"},
 			want:          []*Document{docs["1"], docs["2"]},
 		},
 		{
 			name:          "content not_contains one",
 			where:         nil,
-			whereDocument: map[string]string{"WhereNotContains": "hello"},
+			whereDocument: map[string]string{WhereNotContains: "hello"},
 			want:          []*Document{docs["2"]},
 		},
 		{
@@ -84,7 +84,7 @@ func TestFilterDocs(t *testing.T) {
 		{
 			name:          "meta + contains + not_contains",
 			where:         map[string]string{"language": "de"},
-			whereDocument: map[string]string{WhereContains: "hallo", "WhereNotContains": "bonjour"},
+			whereDocument: map[string]string{WhereContains: "hallo", WhereNotContains: "bonjour"},
 			want:          []*Document{docs["2"]},
 		},
 	}
